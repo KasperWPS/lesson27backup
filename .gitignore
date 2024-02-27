@@ -1,4 +1,4 @@
 .vagrant
 sata*
-disks/*
+disks/*.vdi
 provisioning/files/id_rsa.pub

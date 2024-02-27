@@ -17,7 +17,6 @@
 ### Выполнение
 
 Настроен стенд vagrant (VMs: client; backup), его конфиг:
-*На provisioning/files/client/init_borg.sh дать права на запуск chmod +x ./provisioning/files/client/init_borg.sh*
 
 ```json
 [
@@ -48,6 +47,9 @@
         }
 ]
 ```
+
+*На provisioning/files/client/init_borg.sh дать права на запуск chmod +x ./provisioning/files/client/init_borg.sh*
+
 
 Vagrantfile
 
