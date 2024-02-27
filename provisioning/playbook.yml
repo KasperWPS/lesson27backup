@@ -1,0 +1,122 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+  - name: Accept login with password from sshd
+    ansible.builtin.lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^PasswordAuthentication no$'
+      line: 'PasswordAuthentication yes'
+      state: present
+    notify:
+      - Restart sshd
+
+  - name: Install epel-release
+    ansible.builtin.yum:
+      name: epel-release
+      state: present
+
+  - name: Install soft
+    ansible.builtin.yum:
+      name:
+        - vim
+        - mc
+        - tcpdump
+        - borgbackup
+      state: present
+
+  - name: Set timezone
+    community.general.timezone:
+      name: Europe/Moscow
+    notify:
+      - Restart Chrony service
+
+  handlers:
+
+  - name: Restart Chrony service
+    ansible.builtin.service:
+      name: chronyd
+      state: restarted
+
+  - name: Restart sshd
+    ansible.builtin.service:
+      name: sshd
+      state: restarted
+
+- hosts: client
+  become: true
+  gather_facts: false
+
+  tasks:
+
+  - name: Create .ssh directory
+    ansible.builtin.file:
+      path: /root/.ssh
+      state: directory
+
+    # Только для стенда
+  - name: Copy config ssh for root user
+    ansible.builtin.copy:
+      src: ./files/client/ssh_config
+      dest: /root/.ssh/config
+      mode: '0600'
+
+  - name: Generate key-pair
+    community.crypto.openssh_keypair:
+      path: /root/.ssh/id_rsa
+      size: 2048
+    notify:
+      - Fetch public cert
+
+  - name: Copy borg-backup.service
+    ansible.builtin.copy:
+      src: ./files/client/borg-backup.service
+      dest: /etc/systemd/system/borg-backup.service
+      mode: '0640'
+
+  - name: Copy borg-backup.timer
+    ansible.builtin.copy:
+      src: ./files/client/borg-backup.timer
+      dest: /etc/systemd/system/borg-backup.timer
+      mode: '0640'
+
+  handlers:
+  - name: Fetch public cert
+    ansible.builtin.fetch:
+      src: /root/.ssh/id_rsa.pub
+      dest: ./files/id_rsa.pub
+      flat: true
+
+- hosts: backup
+  become: true
+  gather_facts: false
+
+  tasks:
+
+  - name: Add user borg
+    ansible.builtin.user:
+      name: borg
+
+  - name: Create .ssh directory
+    ansible.builtin.file:
+      path: /home/borg/.ssh
+      state: directory
+
+  - name: Copy public cert
+    ansible.builtin.copy:
+      src: ./files/id_rsa.pub
+      dest: /home/borg/.ssh/authorized_keys
+
+  - name: Create /var/backup directory
+    ansible.builtin.file:
+      path: /var/backup
+      # Установка прав на точку монтирования не распространяется на ФС подключаемого раздела
+      # поэтому необходимо установить права на корень ФС подключаемого раздела
+      # это сделано в inline shell-ptovisioner Vagrant
+      owner: borg
+      group: borg
+      state: directory
+
+

@@ -1,0 +1,27 @@
+[
+	{
+		"name": "client",
+		"cpus": 2,
+		"gui": false,
+		"box": "centos/7",
+		"ip_addr": "192.168.56.150",
+		"memory": "1024",
+		"no_share": true
+	},
+	{
+		"name": "backup",
+		"cpus": 2,
+		"gui": false,
+		"box": "centos/7",
+		"ip_addr": "192.168.56.160",
+		"memory": 1024,
+		"no_share": true,
+		"disks": {
+			"sata1": {
+				"dfile": "./disks/sata1.vdi",
+				"size": "2048",
+				"port": "1"
+			}
+		}
+	}
+]

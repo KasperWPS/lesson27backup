@@ -1,0 +1,4 @@
+.vagrant
+sata*
+disks/*
+provisioning/files/id_rsa.pub
